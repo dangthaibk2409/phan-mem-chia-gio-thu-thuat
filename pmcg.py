@@ -1,9 +1,9 @@
 import customtkinter as ctk; from tkinter import ttk, messagebox, filedialog; import tkinter as tk
 import sqlite3, pandas as pd, os, ctypes, random, json, traceback, sys, time, threading, urllib.request; from datetime import datetime
 
-CURRENT_VERSION = "1.0"
-URL_VERSION = "https://raw.githubusercontent.com/bacsi/phongkham/main/version.txt"
-URL_FILE = "https://raw.githubusercontent.com/bacsi/phongkham/main/pmcg.py" # Hoặc pmcg.exe
+CURRENT_VERSION = "1.1"
+URL_VERSION = "https://raw.githubusercontent.com/dangthaibk2409/phan-mem-chia-gio-thu-thuat/refs/heads/main/version.txt"
+URL_FILE = "https://raw.githubusercontent.com/dangthaibk2409/phan-mem-chia-gio-thu-thuat/refs/heads/main/pmcg.py"
 
 DB_NAME = 'phongkham_v115.db'
 def khoi_tao_db():
@@ -57,6 +57,9 @@ def auto_format_date(event, entry):
     if event.keysym in ['BackSpace', 'Delete', 'Left', 'Right', 'Tab', 'Return', 'Up', 'Down']: return
     t = "".join(c for c in entry.get() if c.isdigit()); t = t[:8]; fmt = t[:2] + "/" + t[2:4] + "/" + t[4:] if len(t) > 4 else (t[:2] + "/" + t[2:] if len(t) > 2 else t)
     if entry.get() != fmt: entry.delete(0, 'end'); entry.insert(0, fmt)
+def clear_tree(tv):
+    c = tv.get_children()
+    if c: tv.delete(*c)
 def gan_phim_enter(widgets, func):
     for w in widgets: w.bind("<Return>", func)
 def sort_busy_slots(busy_str):
@@ -175,10 +178,9 @@ def tao_btn(parent, c_add, c_edit, c_del, c_clear, cols, f_mau, tbl, tree, func,
     ctk.CTkButton(f2, text="Xuất", width=80, fg_color="#16a085", command=lambda: xuat_excel_db(tbl, cols, f_xuat)).grid(row=0, column=2, padx=2)
 
 ctk.set_appearance_mode("Light"); app = ctk.CTk()
-app.title(f"PHẦN MỀM CHIA GIỜ THỦ THUẬT made by DPT - V{CURRENT_VERSION} (BẢN CHÍNH THỨC)")
+app.title(f"PHẦN MỀM CHIA GIỜ THỦ THUẬT made by DPT - V{CURRENT_VERSION}")
 app.geometry("1300x750"); app.withdraw() 
 
-# === GIAO DIỆN TỰ ĐỘNG CẬP NHẬT (OTA UPDATER) ===
 class UpdaterUI(ctk.CTkToplevel):
     def __init__(self, master):
         super().__init__(master)
@@ -186,7 +188,6 @@ class UpdaterUI(ctk.CTkToplevel):
         self.geometry("420x160"); self.resizable(False, False)
         self.attributes('-topmost', True)
         self.protocol("WM_DELETE_WINDOW", self.disable_close)
-        
         self.update_idletasks()
         ws = self.winfo_screenwidth(); hs = self.winfo_screenheight()
         self.geometry('%dx%d+%d+%d' % (420, 160, (ws/2)-(420/2), (hs/2)-(160/2)))
@@ -203,22 +204,19 @@ class UpdaterUI(ctk.CTkToplevel):
     def disable_close(self): pass
 
     def run_update(self):
-        time.sleep(0.8); self.prog.set(0.3)
+        time.sleep(0.5); self.prog.set(0.3)
         try:
-            # KIỂM TRA PHIÊN BẢN TRÊN GITHUB (Mở comment 3 dòng dưới khi có link thật)
             # req = urllib.request.Request(URL_VERSION, headers={'Cache-Control': 'no-cache'})
             # with urllib.request.urlopen(req, timeout=4) as resp:
             #     latest_ver = resp.read().decode('utf-8').strip()
-            latest_ver = CURRENT_VERSION  # Giả lập: Hiện tại đang là bản mới nhất
+            latest_ver = CURRENT_VERSION 
             
             if latest_ver != CURRENT_VERSION:
                 self.lbl_st.configure(text=f"Đã có bản V{latest_ver}. Đang tải dữ liệu...")
                 self.prog.set(0.6)
-                
-                # TẢI FILE MỚI VỀ VÀ GHI ĐÈ
                 # with urllib.request.urlopen(URL_FILE, timeout=10) as resp: data = resp.read()
                 # current_file = sys.argv[0]
-                # if current_file.endswith('.exe'): # Vượt quyền Windows khi update file .exe đang chạy
+                # if current_file.endswith('.exe'):
                 #     old_file = current_file + ".old"
                 #     if os.path.exists(old_file): os.remove(old_file)
                 #     os.rename(current_file, old_file)
@@ -231,17 +229,17 @@ class UpdaterUI(ctk.CTkToplevel):
             else:
                 self.lbl_st.configure(text="Phần mềm đã ở phiên bản mới nhất!")
                 self.prog.set(1.0)
-                time.sleep(0.8)
+                time.sleep(0.5)
                 self.finish()
         except Exception:
             self.lbl_st.configure(text="Bỏ qua cập nhật (Không có kết nối máy chủ).")
             self.prog.set(1.0)
-            time.sleep(0.8)
+            time.sleep(0.5)
             self.finish()
 
     def finish(self):
         self.destroy()
-        app.deiconify() # Hiện phần mềm chính
+        app.deiconify() 
         app.after(0, lambda: app.state('zoomed') if os.name == 'nt' else app.attributes('-zoomed', True))
 
 UpdaterUI(app)
@@ -262,7 +260,7 @@ f1r = ctk.CTkFrame(t1, fg_color="transparent"); f1r.pack(side="right", fill="bot
 tree1 = create_tree(f1r, ("STT", "Loại Máy", "Mã Máy", "Trạng Thái"), [50, 200, 150, 150])
 def clear_1(): global sel_1; sel_1 = None; e1_ten.delete(0, 'end'); e1_ma.delete(0, 'end'); e1_sl.delete(0, 'end'); cb1_tt.set("Sẵn sàng")
 def tai_ds1():
-    for r in tree1.get_children(): tree1.delete(r)
+    clear_tree(tree1)
     conn = sqlite3.connect(DB_NAME); cur = conn.cursor()
     for stt, row in enumerate(cur.execute("SELECT * FROM DanhSachMay"), 1): tree1.insert("", "end", iid=row[0], values=(stt, *row[1:]))
     conn.close(); tai_ds2()
@@ -304,7 +302,7 @@ def clear_2():
     global sel_2; sel_2 = None; e2_ten.delete(0, 'end'); e2_tgm.delete(0, 'end'); e2_tgn.delete(0, 'end'); cb2_loai.set("YHCT"); cb2_phanloai.set("Chưa phân loại"); v2_rut.set(1); v2_phu.set(0)
     for v in v2_nv_phu.values(): v.set("off")
 def tai_ds2():
-    for r in tree2.get_children(): tree2.delete(r)
+    clear_tree(tree2)
     conn = sqlite3.connect(DB_NAME); cur = conn.cursor()
     for stt, r in enumerate(cur.execute("SELECT id, ten, loai_chuyen_mon, phan_loai, loai_may, thoi_gian_may, thoi_gian_nguoi, can_rut_may, can_nguoi_phu, ds_nguoi_phu FROM ThuThuat"), 1):
         tree2.insert("", "end", iid=r[0], values=(stt, r[1], r[2], r[3], r[4], r[5], r[6], "Có" if r[7]==1 else "Không", "Có" if r[8]==1 else "Không", r[9]))
@@ -332,8 +330,7 @@ tree2.bind("<ButtonRelease-1>", click_2); tree2.bind("<Delete>", del_2); tree2.b
 tao_btn(f2_bot, add_2, edit_2, del_2, clear_2, ["ten", "loai_chuyen_mon", "phan_loai", "loai_may", "thoi_gian_may", "thoi_gian_nguoi", "can_rut_may", "can_nguoi_phu", "ds_nguoi_phu"], "ThuThuat", "ThuThuat", tree2, tai_ds2, "DS_ThuThuat")
 
 def tai_ds_pri():
-    for r in tree_pri.get_children(): tree_pri.delete(r)
-    for r in tree_ns_ban.get_children(): tree_ns_ban.delete(r)
+    clear_tree(tree_pri); clear_tree(tree_ns_ban)
     conn = sqlite3.connect(DB_NAME); cur = conn.cursor()
     for r in cur.execute("SELECT id, ten, nam_sinh, gio_ra FROM BenhNhan WHERE gio_ra != '' AND gio_ra IS NOT NULL"): tree_pri.insert("", "end", iid=r[0], values=(r[0], f"{r[1]} ({r[2]})", r[3]))
     stt_ns = 1
@@ -369,7 +366,7 @@ def clear_3():
     for e in [e3_s1, e3_s2, e3_c1, e3_c2]: e.delete(0, 'end')
     for v in kn_vars.values(): v.set("off")
 def tai_ds3():
-    for r in tree3.get_children(): tree3.delete(r)
+    clear_tree(tree3)
     conn = sqlite3.connect(DB_NAME); cur = conn.cursor(); all_staff = []
     for stt, r in enumerate(cur.execute("SELECT id, ten, vai_tro, trang_thai, thoi_gian_lam, nguoi_thay_the, gio_ban, ky_nang FROM NhanSu"), 1):
         tree3.insert("", "end", iid=r[0], values=(stt, *r[1:])); all_staff.append(r[1])
@@ -484,7 +481,7 @@ def clear_4():
     for v in list(v4bs.values()) + list(v4kt.values()): v.set("off")
     update_machine_inputs(None) 
 def tai_ds4():
-    for r in tree4.get_children(): tree4.delete(r)
+    clear_tree(tree4)
     conn = sqlite3.connect(DB_NAME); cur = conn.cursor()
     for stt, row in enumerate(cur.execute("SELECT id, ten_phong, bac_si, ktv, danh_sach_may, so_giuong, danh_sach_giuong FROM PhongThuThuat"), 1): tree4.insert("", "end", iid=row[0], values=(stt, *row[1:]))
     for w in fr4_bs.winfo_children(): w.destroy()
@@ -569,7 +566,7 @@ def clear_5():
     for v in v5tt.values(): v.set("off")
 def tai_ds5():
     tukhoa = e5_search.get().lower(); stt = 1
-    for r in tree5.get_children(): tree5.delete(r)
+    clear_tree(tree5)
     conn = sqlite3.connect(DB_NAME); cur = conn.cursor()
     for row in cur.execute("SELECT id, ten, nam_sinh, loai_bn, ngay_vao, gio_vao, gio_ban, gio_ra, phong, thu_thuat FROM BenhNhan"):
         chuoi_check = f"{row[1]} {row[2]} {row[3]} {row[4]} {row[5]} {row[6]} {row[7]} {row[8]} {row[9]}".lower()
@@ -721,7 +718,7 @@ tree_ns_ban.bind("<ButtonRelease-1>", click_ns_ban); tree_ns_ban.bind("<Delete>"
 f6_bot = ctk.CTkFrame(t6); f6_bot.pack(fill="both", expand=True, padx=10, pady=5)
 def tim_gio_chi_dinh():
     global g_tl, g_ca
-    for r in tree_cd.get_children(): tree_cd.delete(r) 
+    clear_tree(tree_cd)
     if not g_tl: return messagebox.showwarning("Cảnh báo", "Vui lòng bấm 'Chạy xếp lịch tổng' trước!")
     vao_str = e6_v_cd.get()
     if not vao_str: return messagebox.showwarning("Cảnh báo", "Vui lòng nhập 'Giờ vào viện' (VD: 14:04)!")
@@ -775,7 +772,7 @@ tree6.pack(fill="both", expand=True)
 def hien_thi_lich(event=None):
     global g_sched
     tukhoa = e6_search_lich.get().lower(); stt = 1
-    for r in tree6.get_children(): tree6.delete(r)
+    clear_tree(tree6)
     for row in g_sched:
         chuoi_check = f"{row.get('NGAY','')} {row.get('HOTEN','')} {row.get('NAMSINH','')} {row.get('PHONG','')} {row.get('DICHVU','')} {row.get('GIODIENRA','')} {row.get('GIOKETTHUC','')} {row.get('NV CHÍNH','')} {row.get('NV PHỤ','')} {row.get('MAY','')} {row.get('GIUONG','')}".lower()
         if tukhoa in chuoi_check:
@@ -789,7 +786,7 @@ e_ngay_xep = ctk.CTkEntry(f6_mid, width=100); e_ngay_xep.insert(0, datetime.now(
 def run_auto():
     global g_staff, g_proc, g_req, g_rot, g_sched, g_tl, g_ca
     try:
-        for r in tree6.get_children(): tree6.delete(r)
+        clear_tree(tree6)
         conn = sqlite3.connect(DB_NAME); cur = conn.cursor()
         m_types = {}; m_timeline = {"Thủ công": []} 
         for r in cur.execute("SELECT ten_loai, ma_may FROM DanhSachMay WHERE trang_thai='Sẵn sàng'"):
@@ -865,6 +862,7 @@ def run_auto():
             for t_now in range(420, 1200):
                 if 720 <= t_now < 780: continue 
                 el_pats = [p for p in patients if not p['failed'] and p['pending'] and p['free_at'] <= t_now]
+                if not el_pats: continue 
                 el_pats.sort(key=lambda x: (x['leave'], x['rand_seed'])) 
                 for p in el_pats:
                     if phase_idx == 1 and p['skip_phase1']: continue
@@ -889,8 +887,6 @@ def run_auto():
                             scheduled_something = True; break 
                         
                         setup_start = t_now; setup_end = t_now + dn + 1; m_end = t_now + dm + 1
-                        
-                        # FIX LỖI NONETYPE: Chỉ khởi tạo tear_start nếu có yêu cầu rút máy
                         if dm > dn and can_rut == 1: tear_start = t_now + dm - 1; tear_end = t_now + dm + 1
                         else: tear_start = None; tear_end = None
                         
@@ -916,9 +912,7 @@ def run_auto():
                             for s in s_k.keys():
                                 if ttn not in s_k.get(s, []): continue
                                 is_loc = (s in room_staff.get(p['primary_room'], [])); is_flt = (s in floaters)
-                                
                                 if not (is_loc or is_flt): continue 
-                                
                                 shift_ok = False
                                 if not s_ca[s]: shift_ok = True
                                 else:
@@ -938,7 +932,6 @@ def run_auto():
 
                                 if not ds_phu or s in ds_phu:
                                     if can_phu == 1 and f_set and r_role in ['Kỹ thuật viên', 'Điều dưỡng']: sub_cands.append(s)
-                                    # CHỐT CHẶN NONETYPE TẠI ĐÂY
                                     if can_rut == 1 and r_role in ['Kỹ thuật viên', 'Điều dưỡng'] and tear_start is not None:
                                         f_tear = True
                                         for bs, be in s_timeline[s]:
@@ -950,9 +943,9 @@ def run_auto():
                                                 for cs, ce in s_ca[s]:
                                                     if tear_start >= cs and tear_end <= ce: shift_ok_tear = True; break
                                             if shift_ok_tear: mon_cands.append(s)
-                                            
-                            if not main_cands: continue
 
+                            if not main_cands: continue 
+                            
                             if can_phu == 1:
                                 if not sub_cands: continue 
                                 main_cands.sort(key=lambda x: (0 if x in room_staff.get(p['primary_room'], []) else 1, g_staff[x]['used_mins']))
@@ -1018,12 +1011,9 @@ def chuyen_ngay_moi():
         conn.commit(); conn.close()
         e5_search.delete(0, 'end'); e6_search_bn.delete(0, 'end'); e6_r.delete(0, 'end'); e6_ns_b1.delete(0, 'end'); e6_ns_b2.delete(0, 'end'); e6_search_lich.delete(0, 'end')
         lb_suggestions.place_forget()
-        for r in tree_cd.get_children(): tree_cd.delete(r)
+        clear_tree(tree_cd)
         g_sched.clear(); g_rot.clear(); sat_cache.clear(); g_req.clear(); g_proc.clear(); g_staff.clear(); g_tl.clear(); g_ca.clear()
-        hien_thi_lich(); tai_ds5(); tai_ds3(); tai_ds8()
-        for r in tree7_tt.get_children(): tree7_tt.delete(r)
-        for r in tree7_ns.get_children(): tree7_ns.delete(r)
-        for r in tree7_fail.get_children(): tree7_fail.delete(r)
+        hien_thi_lich(); tai_ds5(); tai_ds3(); tai_ds8(); clear_tree(tree7_tt); clear_tree(tree7_ns); clear_tree(tree7_fail)
         luu_trang_thai(); messagebox.showinfo("Thành công", "Đã dọn dẹp hệ thống. Sẵn sàng cho ngày mới!")
 
 ctk.CTkButton(f6_mid, text="CHỐT SỔ & SANG NGÀY MỚI", fg_color="#8e44ad", hover_color="#9b59b6", height=40, font=("Arial", 12, "bold"), command=chuyen_ngay_moi).pack(side="left", padx=30)
@@ -1054,9 +1044,7 @@ tree7_fail = create_tree(f7_bot, ("STT", "Tên Bệnh Nhân", "Năm Sinh", "Th�
 
 def tai_thong_ke():
     global g_req, g_proc, g_staff, g_rot
-    for r in tree7_tt.get_children(): tree7_tt.delete(r)
-    for r in tree7_ns.get_children(): tree7_ns.delete(r)
-    for r in tree7_fail.get_children(): tree7_fail.delete(r)
+    clear_tree(tree7_tt); clear_tree(tree7_ns); clear_tree(tree7_fail)
     conn = sqlite3.connect(DB_NAME); cur = conn.cursor()
     type_map = {r[0]: r[1] for r in cur.execute("SELECT ten, phan_loai FROM ThuThuat")}; conn.close()
     stats_by_type = {'Loại 1': {}, 'Loại 2': {}, 'Loại 3': {}, 'Chưa phân loại': {}}; grand_req = grand_done = grand_fail = 0
@@ -1190,7 +1178,7 @@ def run_saturday_schedule():
     if not final_pats: return messagebox.showwarning("Cảnh báo", "Chưa chọn thủ thuật nào cho bệnh nhân!")
 
     try:
-        for r in tree6.get_children(): tree6.delete(r)
+        clear_tree(tree6)
         conn = sqlite3.connect(DB_NAME); cur = conn.cursor()
         m_types = {}; m_timeline = {"Thủ công": []} 
         for r in cur.execute("SELECT ten_loai, ma_may FROM DanhSachMay WHERE trang_thai='Sẵn sàng'"):
@@ -1232,6 +1220,7 @@ def run_saturday_schedule():
             for t_now in range(420, 1200):
                 if 720 <= t_now < 780: continue 
                 el_pats = [p for p in patients if not p['failed'] and p['pending'] and p['free_at'] <= t_now]
+                if not el_pats: continue
                 el_pats.sort(key=lambda x: (x['leave'], x['rand_seed'])) 
                 for p in el_pats:
                     if phase_idx == 1 and p['skip_phase1']: continue
@@ -1257,7 +1246,6 @@ def run_saturday_schedule():
                         
                         setup_start = t_now; setup_end = t_now + dn + 1; m_end = t_now + dm + 1
                         
-                        # CHỐT CHẶN AN TOÀN NONETYPE
                         if dm > dn and can_rut == 1: tear_start = t_now + dm - 1; tear_end = t_now + dm + 1
                         else: tear_start = None; tear_end = None
                         
@@ -1357,7 +1345,7 @@ def run_saturday_schedule():
                                 p['free_at'] = m_end; p['pending'].pop(i); scheduled_something = True; break 
                         if scheduled_something: break 
         for p in patients:
-            for ttn in p['pending']: g_rot.append({'bn': p['name'], 'ns': p['nam_sinh'], 'tt': ttn, 'room': p['primary_room'], 'staff': "Không có người", 'reason': "Kẹt nhân sự/máy/giường"})
+            for ttn in p['pending']: g_rot.append({'bn': p['name'], 'ns': p['nam_sinh'], 'tt': ttn, 'room': p['primary_room'], 'staff': "Trực Thứ 7", 'reason': "Kẹt nhân sự/máy"})
         results.sort(key=lambda x: x['t_sort'])
         g_sched.clear(); g_sched.extend(results); g_tl.clear(); g_tl.update(s_timeline); g_ca.clear(); g_ca.update(s_ca)
         e6_search_lich.delete(0, 'end'); hien_thi_lich(); conn.close(); tai_thong_ke(); luu_trang_thai()
